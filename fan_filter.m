@@ -22,31 +22,43 @@ plot_samples    = 128;
 n       =   (n2+1)*(2*n1+1);
 f       =   [1;zeros(n,1)];
 
-[w1,w2] =   meshgrid(-pi:2*pi/(m-1):pi,-pi:2*pi/(m-1):pi);
+[wx,wu] =   meshgrid(-pi:2*pi/(m-1):pi,-pi:2*pi/(m-1):pi);
 % W       =  ((w1 >= wp1 & w1 <= wp2 & w2 >= wp1 & w2 <= wp2)|(w1 <= -wp1 & w1 >= -wp2 & w2 <= -wp1 & w2 >= -wp2) +...
 %              ((w1 <= wa1 | w1 >= wa2 | w2 <= wa1 | w2 >= wa2)&(w1 >= -wa1 | w1 <= -wa2 | w2 >= -wa1 | w2 <= -wa2))*w);
 % 
 % Ad      =   (w1 >= wp1 & w1 <= wp2 & w2 >= wp1 & w2 <= wp2)|(w1 <= -wp1 & w1 >= -wp2 & w2 <= -wp1 & w2 >= -wp2);
 
-mp1 = 1;
-mp2 = 0.5;
-ma1 = 0.3;
-ma2 = 1.5;
-wp  =   0.8*pi;
-wa = 0.9*pi;
-c= 0.2*pi;
+% mp1 = 1;
+% mp2 = 0.5;
+% ma1 = 0.3;
+% ma2 = 1.5;
+% wp  =   0.8*pi;
+% wa = 0.9*pi;
+% c= 0.2*pi;
+alpha = 50;
+theta = 20;
+T = 0.08*pi;
+B = 0.9*pi;
+Ba = pi;
 
-Ad = ((w1>=mp1*w2 & w1<=mp2*w2)|(w1<=mp1*w2 & w1>=mp2*w2))&(w1.^2+w2.^2<=wp^2);
-W       =  (1-((((w1+c>=mp1*w2 & w1-c<=mp2*w2)|(w1-c<=mp1*w2 & w1+c>=mp2*w2))&(w1.^2+w2.^2<=wa^2))))*w+Ad;
+m1 = tand(alpha-theta);
+m2 = tand(alpha+theta);
+c1 = T/cosd(alpha-theta);
+c2 = T/cosd(alpha+theta);
+ca1 = (T+0.1*pi)/cosd(alpha-theta);
+ca2 = (T+0.1*pi)/cosd(alpha+theta);
+
+Ad = ((wu>=m1*wx-c1 & wu<=m2*wx+c2)|(wu<=m1*wx+c1 & wu>=m2*wx-c2))&(wu.^2+wx.^2<=B^2);
+W       =  (1-( ((wu>=m1*wx-ca1 & wu<=m2*wx+ca2)|(wu<=m1*wx+ca1 & wu>=m2*wx-ca2))&(wu.^2+wx.^2<=Ba^2)))*w+Ad;
 
 % wp  =   0.5*pi;
 % wa  =   0.7*pi;
 % W       =   ((w1.^2 + w2.^2) <= wp^2 ) + (((w1.^2 + w2.^2) >= wa^2 )*w);
 % Ad      =   (w1.^2 + w2.^2) <= wp^2;
 
-contour(w1,w2,Ad)
+contour(wx,wu,Ad)
 hold on;
-contour(w1,w2,W)
+contour(wx,wu,W)
 grid on
 %% 
 dropout =   sum(sum(W==0));
@@ -57,8 +69,8 @@ M_act       =  M-dropout;
 A1_temp     = zeros(M_act,n);
 b1_temp     = zeros(M_act,1);
 for p = 1:M
-    w1_p    = w1(p); 
-    w2_p    = w2(p);
+    w1_p    = wx(p); 
+    w2_p    = wu(p);
    
     n2_array = 0:n2;
     cos_w1w2 = [];
@@ -70,8 +82,6 @@ for p = 1:M
             cos_w1w2 = W(p)*[cos_theta cos_w1w2];
         end
 
-        
-%         cw_i = [cos_array'; cos_array2'];
         A1_temp(count_i,:)  = W(p)*cos_w1w2;
         b1_temp(count_i)    = W(p)*Ad(p);
         count_i = count_i +1; 
@@ -94,7 +104,7 @@ cvx_end
 h = x(2:end);
 H = flipud(reshape(h,n2+1,2*n1+1));
 H_hat= [H(1:n2,:)/2;H(n2+1,:);flipud(fliplr(H(1:n2,:)/2))];
-
+save('H_hat.mat','H_hat')
 
 figure;
 surf(H_hat);
