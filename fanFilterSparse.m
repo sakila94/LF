@@ -151,14 +151,15 @@ h_new   = zeros(n,1);
 h_new(tau_bar) = x_new(2:end);
 
 H_new = flipud(reshape(h_new,n2+1,2*n1+1));
-H_hatN= [H_new(1:n2,:)/2;H_new(n2+1,:);flipud(fliplr(H_new(1:n2,:)/2))];
+H_hatSp= [H_new(1:n2,:)/2;H_new(n2+1,:);flipud(fliplr(H_new(1:n2,:)/2))];
+save('H_hatSparse.mat','H_hatSp')
          
 %% Visualization of results
 
 figure;
-surf(H_hatN);
+surf(H_hatSp);
          
-[Amp,fx,fy] = freqz2(H_hatN,[plot_samples plot_samples]);
+[Amp,fx,fy] = freqz2(H_hatSp,[plot_samples plot_samples]);
 gain        = 20*log10(abs(Amp));
 
 figure;
