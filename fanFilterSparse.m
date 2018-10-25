@@ -110,7 +110,7 @@ gain        = 20*log10(abs(Amp));
 figure;
 mesh(fx,fy,gain,gain.*(gain>-100))
 zlim([-100 5]);
-%%
+%% Hard Threshold
 
 H_ht        = zeros(n2+1,2*n1+1);
 H_ht(1:n2,:) = H(1:n2,:)/2.* ( abs(H(1:n2,:)/2) >= epsilon_t);

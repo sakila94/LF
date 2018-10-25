@@ -20,7 +20,8 @@ plot_samples    = 128;
 %% Define parameters
 
 n       =   (n2+1)*(2*n1+1);
-f       =   [1;zeros(n,1)];
+e_n     =   ones(n,1);
+f       =   [1; mu*e_n; zeros(n,1)];
 
 [wx,wu] =   meshgrid(-pi:2*pi/(m-1):pi,-pi:2*pi/(m-1):pi);
 
@@ -88,20 +89,25 @@ for p = 1:M
     end
 end
 
-A1          =   [ones(M_act,1) A1_temp;
-                 ones(M_act,1) -A1_temp];
+A1          =   [ones(M_act,1) zeros(M_act,n) A1_temp;
+                 ones(M_act,1) zeros(M_act,n) -A1_temp];
 b1          =   [b1_temp; -b1_temp];
 
+A2          =   [zeros(n,1) eye(n) eye(n);
+                zeros(n,1) eye(n) -eye(n)];
+            
+A           =   [A1; A2];
+b           =   [b1; zeros(2*n,1)];
 
  
 cvx_begin
-    variable x(n+1)
+    variable x(2*n+1)
     minimize (f'*x)
     subject to
-        A1 * x  >= b1
+        A * x  >= b
 cvx_end
 
-h = x(2:end);
+h = x(n+2:2*n+1);
 H = flipud(reshape(h,n2+1,2*n1+1));
 H_hat= [H(1:n2,:)/2;H(n2+1,:);flipud(fliplr(H(1:n2,:)/2))];
 save('H_hat.mat','H_hat')
@@ -115,3 +121,59 @@ gain        = 20*log10(abs(Amp));
 figure;
 mesh(fx,fy,gain,gain.*(gain>-100))
 zlim([-100 5]);
+
+%% Hard Threshold
+
+H_ht        = zeros(n2+1,2*n1+1);
+H_ht(1:n2,:) = H(1:n2,:)/2.* ( abs(H(1:n2,:)/2) >= epsilon_t);
+H_ht(n2+1,:) = H(n2+1,:).* ( abs( H(n2+1,:)) >= epsilon_t);
+% H_ht(1,:)   = [h22 h23_T].* ( abs([h22 h23_T]) >= epsilon_t);
+% H_ht(:,1)   = [h22; h32].* ( abs([h22; h32]) >= epsilon_t);
+% H_ht(2:end,2:end)   = H33 .* ( abs(H33) >= epsilon_t);
+H_ht = flipud(H_ht);
+% counting zeros
+count       = sum(sum(H_ht(2:end,2:end) == 0));
+count       = (sum(sum(H_ht == 0)) - count) *2 + count*4
+%% Calculate required parameters
+
+h_ht        = H_ht(:);
+tau         = find(h_ht==0);
+tau_bar     = find(h_ht~=0);
+n_sp        = length(tau_bar)  %length(h_ht)  - length(tau)
+
+for h_i = flipud(tau)
+    A1_temp(:,h_i) = [];
+end
+
+A_new   =   [ones(M_act,1) A1_temp;
+             ones(M_act,1) -A1_temp];
+b_new   =   b1; 
+f_new   =   [1; zeros(n_sp,1)];
+
+cvx_begin
+    variable x_new(n_sp+1)
+    minimize (f_new'*x_new)
+    subject to
+        A_new * x_new  >= b_new
+cvx_end
+
+%% Reconstructing the impulse response
+
+h_new   = zeros(n,1);
+h_new(tau_bar) = x_new(2:end);
+
+H_new = flipud(reshape(h_new,n2+1,2*n1+1));
+H_hatSp= [H_new(1:n2,:)/2;H_new(n2+1,:);flipud(fliplr(H_new(1:n2,:)/2))];
+save('H_hatSparse.mat','H_hatSp')
+         
+%% Visualization of results
+
+figure;
+surf(H_hatSp);
+         
+[Amp,fx,fy] = freqz2(H_hatSp,[plot_samples plot_samples]);
+gain        = 20*log10(abs(Amp));
+
+figure;
+mesh(fx,fy,gain,gain.*(gain>-80))
+zlim([-80 5]);
