@@ -35,19 +35,22 @@ f       =   [1;zeros(n,1)];
 % wp  =   0.8*pi;
 % wa = 0.9*pi;
 % c= 0.2*pi;
-alpha = 50;
-theta = 20;
+alpha = 70;
+theta = 10;
 T = 0.08*pi;
 B = 0.9*pi;
+Ba = pi;
 
 m1 = tand(alpha-theta);
 m2 = tand(alpha+theta);
 c1 = T/cosd(alpha-theta);
 c2 = T/cosd(alpha+theta);
-c
+ca1 = (T+0.1*pi)/cosd(alpha-theta);
+ca2 = (T+0.1*pi)/cosd(alpha+theta);
 
 Ad = ((wu>=m1*wx-c1 & wu<=m2*wx+c2)|(wu<=m1*wx+c1 & wu>=m2*wx-c2))&(wu.^2+wx.^2<=B^2);
-W       =  (( ((wu>=m1*wx-c1 & wu<=m2*wx+c2)|(wu<=m1*wx+c1 & wu>=m2*wx-c2))&(wu.^2+wx.^2<=B^2)));
+Ad1 = ((wu>=m1*wx-c1 & wu<=m2*wx+c2)|(wu<=m1*wx+c1 & wu>=m2*wx-c2))&(wu.^2+wx.^2<=B^2);
+W       =  (1-( ((wu>=m1*wx-ca1 & wu<=m2*wx+ca2)|(wu<=m1*wx+ca1 & wu>=m2*wx-ca2))&(wu.^2+wx.^2<=Ba^2)))*w+Ad;
 
 % wp  =   0.5*pi;
 % wa  =   0.7*pi;
@@ -55,9 +58,9 @@ W       =  (( ((wu>=m1*wx-c1 & wu<=m2*wx+c2)|(wu<=m1*wx+c1 & wu>=m2*wx-c2))&(wu.
 % Ad      =   (w1.^2 + w2.^2) <= wp^2;
 
 contour(wx,wu,Ad)
-% hold on;
-% contour(wx,wu,W)
-% grid on
+hold on;
+contour(wx,wu,Ad1)
+grid on
 %% 
 % dropout =   sum(sum(W==0));
 % 
@@ -67,8 +70,8 @@ contour(wx,wu,Ad)
 % A1_temp     = zeros(M_act,n);
 % b1_temp     = zeros(M_act,1);
 % for p = 1:M
-%     w1_p    = w1(p); 
-%     w2_p    = w2(p);
+%     w1_p    = wx(p); 
+%     w2_p    = wu(p);
 %    
 %     n2_array = 0:n2;
 %     cos_w1w2 = [];
@@ -80,8 +83,6 @@ contour(wx,wu,Ad)
 %             cos_w1w2 = W(p)*[cos_theta cos_w1w2];
 %         end
 % 
-%         
-% %         cw_i = [cos_array'; cos_array2'];
 %         A1_temp(count_i,:)  = W(p)*cos_w1w2;
 %         b1_temp(count_i)    = W(p)*Ad(p);
 %         count_i = count_i +1; 
@@ -104,7 +105,7 @@ contour(wx,wu,Ad)
 % h = x(2:end);
 % H = flipud(reshape(h,n2+1,2*n1+1));
 % H_hat= [H(1:n2,:)/2;H(n2+1,:);flipud(fliplr(H(1:n2,:)/2))];
-% 
+% save('H_hat.mat','H_hat')
 % 
 % figure;
 % surf(H_hat);
