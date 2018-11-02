@@ -56,9 +56,9 @@ W       =  (1-( ((wu>=m1*wx-ca1 & wu<=m2*wx+ca2)|(wu<=m1*wx+ca1 & wu>=m2*wx-ca2)
 % W       =   ((w1.^2 + w2.^2) <= wp^2 ) + (((w1.^2 + w2.^2) >= wa^2 )*w);
 % Ad      =   (w1.^2 + w2.^2) <= wp^2;
 
-contour(wx,wu,Ad)
+surf(wx,wu,Ad)
 hold on;
-contour(wx,wu,W)
+surf(wx,wu,W)
 grid on
 %% 
 dropout =   sum(sum(W==0));
